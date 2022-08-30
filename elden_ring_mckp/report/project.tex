@@ -1,0 +1,427 @@
+\documentclass[10pt]{article}
+
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{hyperref}
+\usepackage{cleveref}
+\usepackage{array}
+\usepackage{float}
+\usepackage[round]{natbib}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{mathtools}
+
+\newtheorem{theorem}{Proposition}
+\newtheorem{definition}{Definition}
+\newtheorem{lemma}{Lemma}
+
+% \usepackage[top=1in,bottom=1in,left=1in,right=1in]{geometry}
+
+\newcommand{\cbrace}[1]{\left\lbrace #1 \right\rbrace}
+\newcommand{\C}{\mathcal{C}}
+
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+\title{
+    Multiple Choice Knapsack Problem using Cover Inequalities for Optimizing Armor Selection for Elden Ring.
+}
+\author{
+    \href{barma017@umn.edu}{Simanta Barman}
+}
+
+\date{}
+
+\begin{document}
+
+    \begin{titlepage}
+        \maketitle
+        \thispagestyle{empty}
+    \end{titlepage}
+
+    \section{Introduction}
+    Elden Ring is an Action Role Playing Game (ARPG) developed by FromSoftware and was released on February 25th, 2022.
+    FromSoftware is famous for making very difficult games and they did not make an exception with this game. A player
+    is assigned many base stats in the beginning of the game which can be upgraded by making progress in the game. One
+    of the most important stats is the equip load. The speed at which the player can move, evade attacks by performing
+    dodge rolls and backsteps depends on this stat. Based on the equip load a player can move in four different speeds.
+    Equip load under $30\%, 70\%$, greater than or equal to $70\%$ and $100\%$ of the maximum weight of the player puts
+    load status of the player to light, medium, heavy and overloaded respectively. Light load allows the player to move
+    the fastest and overloaded restricts all evasive actions and allows only very slow movements. Equip loads depends on
+    the sum of the weight of the items carried by the player. Items include weapons, armors, talismans and armaments.
+    Being the heaviest items and crucial to the protection of the player, armor choice is very important. A player
+    has to select four pieces of armor: 1. Head, 2. Arms, 3. Chest, 4. Legs.
+
+    The objective of this project is to find out the best armor pieces from all the armor pieces available in the game
+    so that the sum of the weights of the armor pieces is under a maximum weight threshold. The maximum weight or budget
+    weight from this point in this report will refer to the maximum sum of armor piece's weight only. A brute force solution 
+    implementation is already available at \href{https://github.com/oureuphoriant/Elden_Ring_Armor_Calc}{github}. This
+    project will focus on a solution algorithm based on optimization formulation.
+
+    The report is organized in five sections. The first section introduces the objective of the project. The second
+    section describes the dataset using which the problem will be tackled. The third section describes the formulation.
+    The fourth section is divided into four subsections: 1. 0-1 Knapsack using Dynamic Programming, 2. Separation
+    Problem, 3. Lifting Proccedure, 4. Solution Algorithm. The fifth section describes some numerical results using the
+    solution methods discussed in the previous sections. Finally the report concludes with the sixth section where some
+    conclusions are presented.
+
+
+    \section{Dataset}
+    The \href{https://github.com/oureuphoriant/Elden_Ring_Armor_Calc}{dataset}
+    includes the information about the armor pieces. 
+    Data for 574 armor pieces are available in the dataset. 
+    4 different classes of armor pieces are present in the dataset: 
+    \begin{enumerate}
+        \item Head piece: $h = 169$ piece's data available.
+        \item Arms piece: $a = 94$ piece's data available.
+        \item Chest piece: $c = 204$ piece's data available.
+        \item Legs piece: $l = 107$ piece's data available.
+    \end{enumerate}
+
+    Each armor piece $x$ has some value $p(x) \in \mathbb{R}_+$ for each element $p$ of the set of attributes, $P = \left\lbrace \right.$physical, 
+    strike, slash, pierce, magic, fire, lightning, holy, immunity, robustness, focus, poise$\left.\right\rbrace$
+    
+
+
+
+    \section{Formulation}
+    Let, the set of different classes of armors be denoted by $T = \cbrace{H, A, C, L}$. Here the set of all head, arms,
+    chest and legs pieces are denoted by $H = \cbrace{H_i}_{i=1}^h$, $A = \cbrace{A_i}_{i=1}^a$, $C =
+    \cbrace{C_i}_{i=1}^c$ and $L = \cbrace{L_i}_{i=1}^l$ respectively. Here, $H_i, A_i, C_i$ and $L_i$ are binary
+    variables with values $1$ if that piece is chosen in the optimal solution otherwise $0$. Denote the set of all
+    attributes for an armor piece by $P$. The weight of item $x \in t$ for all $t \in T$ is denoted by $w(x) \in
+    \mathbb{R}_+$. The normalized values for attribute $p \in P$ for an item $x \in t$ for all $t \in T$ can be accessed
+    by $p(x)$. Let $m^p$ be the multiplier for each attribute which indicates the priority for that attibute of the
+    player. Let $b \in \mathbb{R}_+$ be the maximum weight capacity of the character
+
+
+    \begin{enumerate}
+        \item Choose only $1$ piece of armor from each class of armors.
+            \begin{align}
+                \sum\limits_{i=1}^h H_i = 1 &&& \text{and, } H_i \in \cbrace{0, 1} \forall i \in \cbrace{1, \cdots, h}\\
+                \sum\limits_{i=1}^a A_i = 1 &&& \text{and, } A_i \in \cbrace{0, 1} \forall i \in \cbrace{1, \cdots, a}\\
+                \sum\limits_{i=1}^c C_i = 1 &&& \text{and, } C_i \in \cbrace{0, 1} \forall i \in \cbrace{1, \cdots, c}\\
+                \sum\limits_{i=1}^l L_i = 1 &&& \text{and, } L_i \in \cbrace{0, 1} \forall i \in \cbrace{1, \cdots, l}
+            \end{align}
+        \item Weight cannot exceed the maximum weight capacity of the character.
+            \begin{align}
+                \sum\limits_{i=1}^h w(H_i) \cdot H_i + \sum\limits_{i=1}^a w(A_i) \cdot A_i  
+                + \sum\limits_{i=1}^c w(C_i) \cdot C_i  + \sum\limits_{i=1}^l w(L_i) \cdot L_i \leq b
+            \end{align}
+        \item The objective is to maximize the attibute values based on the priorities set on the attibutes.
+            \begin{align}
+                \sum\limits_{i=1}^h H_i \left( \sum\limits_{p \in P} p(H_i) \cdot m^p \right) 
+                + \sum\limits_{i=1}^a A_i \left( \sum\limits_{p \in P} p(A_i) \cdot m^p \right)  \notag \\
+                + \sum\limits_{i=1}^c C_i \left( \sum\limits_{p \in P} p(C_i) \cdot m^p \right)
+                + \sum\limits_{i=1}^l L_i \left( \sum\limits_{p \in P} p(L_i) \cdot m^p \right)
+            \end{align}
+    \end{enumerate}
+
+    Define, the value for piece $x \in t ~\forall t \in T$ by $v(x) = \sum\limits_{p \in P} p(x) \cdot m^p$.
+
+    Then the formulation can be written as the standard Multiple Choice Knapsack Problem (MCKP).
+
+    \begin{align}
+        \max \qquad & \sum\limits_{t \in T} \sum\limits_{x \in t} v(x) \cdot x \\
+        \text{s.t.} \qquad & \sum\limits_{t \in T} \sum\limits_{x \in t} w(x) \cdot x \leq b &&& \label{kpe1}\\
+                            & \sum\limits_{x \in t} x = 1 &&& \forall t \in T \\
+                            &  x \in \cbrace{0, 1} &&& \forall t \in T, ~\forall x \in t \label{kpe2}
+    \end{align}
+
+    % This problem can be lagrangianized into the following problem by introducing dual variable $u_t > 0$ for all $t \in T$.
+    % \begin{align}
+    %     \max \qquad & \sum\limits_{t \in T} \sum\limits_{x \in t} v(x) \cdot x - \sum\limits_{t \in T} u_t \left( \sum\limits_{x \in t} x - 1 \right)\\
+    %     \text{s.t.} \qquad & \sum\limits_{t \in T} \sum\limits_{x \in t} w(x) \cdot x \leq b &&&\\
+    %                         &  x \in \cbrace{0, 1} &&& \forall t \in T, ~\forall x \in t
+    % \end{align}
+
+    Now, consider the Knapsack inequality given by \cref{kpe1,kpe2}. The Knapsack set can be written as 
+    \begin{align}
+        X = \cbrace{ x \in \cbrace{0, 1}^n:  \sum\limits_{t \in T} \sum\limits_{x \in t} w(x) \cdot x \leq b}
+    \end{align}
+
+    where, $n = \sum\limits_{t \in T} |t|$ and $N = \cbrace{1,\cdots, n}$. So, an armor piece variable $x_i$ can be
+    accessed by index $i \in N$ where $N$ is the set of indeces associated to each piece of armor of different classes.
+    The weight function is $w: x \rightarrow \mathbb{R}_+$ and budget for weight is $b \in \mathbb{R}_+$. So, the
+    formulation can further be simplified to 
+    \begin{align}
+        Z_{\mathrm{mckp}} = \max \cbrace{ \sum\limits_{i \in N} v(x_i) \cdot x_i: \sum\limits_{i \in N} w(x_i) \cdot x_i \leq b, \sum\limits_{x \in t} x = 1 ~\forall t \in T, x \in \cbrace{0, 1}^n}
+    \end{align}
+    
+
+    \section{Methodology}
+    We will solve the MCKP by solving the LP relaxation to get a continuous solution. The continuous solution will be
+    used to generate cover inequalities by solving the separation problem which will be described later. A lifting
+    proccedure will then be used to strengthen the cover inequalities. After adding those inequalities to the LP
+    relaxation of the MCKP, the problem will be solved again to get another continuous solution. Then the process will
+    be repeated until the separation problem results in an objective value that satisfies all cover inequalities. 
+
+    \begin{definition}[\cite{wolsey} Definition 9.6]
+        A set $\C \subseteq N$ is a cover if $\sum_{j \in \C} a_j > b$. A cover is minimal if $\C \backslash \cbrace{j}$ is not a cover for any 
+        $j \in \C$.
+    \end{definition}
+
+    \begin{theorem}[\cite{wolsey} Proposition 9.2]
+        If $\C \subseteq N$ is a cover for $X$, the cover inequality \cref{prop92} is valid for $X$
+        \begin{align}
+            \sum\limits_{j \in \C} x_j \leq |\C| - 1 \label{prop92}
+        \end{align}
+    \end{theorem}
+
+    \subsection{0-1 Knapsack with Dynamic Programming}
+    The solution proccedure for $0-1$ knapsack with Dynamic Programming (DP) will be used in the following subsections. 
+    The DP recursion to solve the 0-1 knapsack is
+    \begin{align}
+        F[r, h] = \begin{cases}
+            F[r-1, h] & \text{ if } a_r^{\mathrm{kp}} > h \\
+            \max \cbrace{ F[r-1, h], c_r^{\mathrm{kp}} + F[r-1, h]} & \text{ otherwise}
+        \end{cases}
+    \end{align}
+
+    Here, the first case means that if the current item $r$ is added to the knapsack then total weight will exceed $h$
+    so the current item cannot be included in the knapsack. The second case means that since current item $r$ can be
+    included in the knapsack, to maximize to the value of the knapsack choose the case where value is maximized.
+
+    The DP can be solved using the following algorithm given in class:
+    \begin{algorithm}
+        \caption{Maximum objective value to the 0-1 knapsack using DP}
+        \begin{algorithmic}[1]
+            \State Inputs: Item values $c^{\mathrm{kp}}$, weights $a^{\mathrm{kp}}$ and budget $b^{\mathrm{kp}}$.
+            \State $F[0, h] = 0     \qquad h \in [0, b-1]$
+            \State $F[r, 0] = 0     \qquad r \in [1, n-1]$
+            \For{$r \in [1, n-1]$}
+                \For{$h \in [1, b-1]$}
+                    \If {$h \leq a^{\mathrm{kp}}_r - 1$}
+                        \State $F[r, h] = F[r-1, h]$
+                    \Else
+                        \State $\max \cbrace{ F[r-1, h], ~c^{\mathrm{kp}}_r + F[r-1, h-1]}$
+                    \EndIf
+                \EndFor
+            \EndFor
+        \end{algorithmic} 
+        \label{kpa}
+    \end{algorithm}
+
+    Algorithm to get the knapsack solution from the table $F$ created during \cref{kpa}:
+
+    \begin{algorithm}
+        \caption{Getting the solution to the 0-1 knapsack using the DP table}
+        \begin{algorithmic}[1]
+            \State Inputs: $F, a^{\mathrm{kp}}, b^{\mathrm{kp}}$
+            \State Initialize solution $x$.
+            \State $h \gets b^{\mathrm{kp}} - 1$
+            \For{$r \in [n-1, 0]$}
+                \If {$F[r, h] = F[r-1, h]$}
+                    \State $x_r = 0$
+                \Else
+                    \State $x_r = 1$
+                    \State $h = h - \lfloor a^{\mathrm{kp}}_r \rfloor$
+                \EndIf
+            \EndFor
+        \end{algorithmic} 
+    \end{algorithm}
+
+    \subsection{Separation Problem}
+    Now the separation problem for the cover inequalities is, given nonintegral $x^*$ with $0 \leq x_j^* \leq 1$ for all $j \in N$ find out 
+    whether $x^*$ satisfies all the cover inequalities. \Cref{prop92} can be rewritten as
+    \begin{align}
+       1 \leq |\C| - \sum\limits_{j \in \C} x_j \notag \\
+       \implies 1 \leq \sum\limits_{j \in \C} \left( 1 - x_j \right)
+    \end{align}
+
+    The separation problem can be written as a decision problem: Does there exist a set $\C \subseteq N$ with $\sum\limits_{j \in \C} w(x_j) > b$ 
+    for which $\sum_{j \in \C} (1 - x_j^*) < 1$? Here, the cover $\C$ would contain all the indeces of the armor piece variables where an index
+    indicate an armor piece variable in the flattened list of all armor pieces. This decision problem can be written as an $0-1$ integer program.
+    \begin{align} 
+        \zeta = \min \quad & \sum\limits_{j \in N} (1 - x_j^*) z_j \\
+        \text{s.t.} \quad & \sum\limits_{j \in N} w(x_j) z_j \geq b + 1\\
+                    \quad & z_j \in \cbrace{0, 1} && \forall j \in N
+    \end{align}
+
+    If $\zeta \geq 1$, $x^*$ satisfies all the cover inequalities (Wolsey Theorem 9.2).
+    Here, $z_j = 1$ if $j \in \C$, otherwise $0$. Again, $x_j$ refers to the $j$th armor 
+    piece in the flattened list of all armor pieces. 
+
+    So, this knapsack problem can be solved to get the cover inequality for which $x*$ is infeasible. 
+    Otherwise if $x^*$ is feasible then cover inequality will not be identified.
+
+    Here, the values, weights, budget for the knapsack instance would be $c^{\mathrm{kp}} = \cbrace{(1 - x_j^*) ~\forall
+    j \in N}$, $a^{\mathrm{kp}} = \cbrace{w(x_j) ~\forall j \in N}$, $b^{\mathrm{kp}} = b + 1$. Using the DP described
+    in the previous subsection this problem can be solved.
+
+
+    \subsection{Lifting Proccedure}
+    After getting a cover by solving the separation problem with $x^*$ obtained from the LP relaxation of the 
+    original MCKP the cover inequalities will be strengthened using a lifting proccedure.
+
+    \begin{enumerate}
+        \item Generate different permutations of ordering of $N \setminus \C$
+        \item Let, $j_1, \cdots, j_r$ be an ordering of $N \setminus \C$.
+        \item Set $t = 1$
+        \item The valid inequality $\sum_{i=1}^{t-1} \alpha_{j_i} x_{j_i} + \sum_{j \in \C} x_j \leq |\C| - 1$ 
+        has been obtained so far. To calculate largest $\alpha_{j_t}$ for which $\alpha_{j_t} x_{j_t} + \sum_{i=1}^{t-1} \alpha_{j_i} x_{j_i} 
+        + \sum_{j \in \C} x_j \leq |\C| - 1$ is valid solve the knapsack problem:
+        \begin{align}
+            \zeta_t = \max & \sum_{i=1}^{t-1} \alpha_{j_t} x_{j_t} + \sum_{j \in \C} x_j \\
+                    \text{s.t.} & \sum_{i \in N \setminus \cbrace{t}} w(x_{j_i}) \cdot x_{j_i} \leq b - w(x_{j_t}) \\
+                                & x_i \in \cbrace{0, 1} && \forall i \in N \setminus {t}
+        \end{align}
+        \item Set $\alpha_{j_t} = |\C| - 1 - \zeta_t$
+        \item Increment $t$ by $1$ until $t = r$ and go to step $4$.
+        \item Choose a different ordering $j_1, \cdots, j_r$ of $N \setminus \C$ and go to step 3 if the specified maximum number of orderings 
+        to test has not been exceeded yet. Otherwise terminate.
+    \end{enumerate}
+
+    Since, a lot of differnt permutations of the orderings is possible only a specified number of ordering will be tested. This means that all possible
+    cover inequalities may not be identified which may result in not finding the optimal solution to the MCKP.
+    
+    \subsection{Solution Algorithm}
+    Using the separation problem and the lifting proccedure described in the previous section the solution algorithm is given below.
+    \begin{enumerate}
+        \item Get the LP relaxation of the MCKP.
+        \item Solve the LP relaxation of MCKP to get $x^*$.
+        \item Using the obtained $x^*$, solve the separation problem to get a cover inequality.
+        \item Terminate if the objective value from the separation problem, $\zeta \geq 1$. 
+        Because that implies all the cover inequalities are satisfied for $x^*$.
+        \item Strengthen the cover inequality using the lifting proccedure.
+        \item Add all the inequalities obtained so far to the LP relaxation of MCKP and get new $x^*$.
+        \item Go to step 3.
+    \end{enumerate}
+
+    \section{Numerical Results}
+    The solution algorithms were implemented in Python. The solution algorithms were compared with results from the Gurobi solver.
+
+    For a maximum budget of $b = 30$ the following results were obtained:
+    
+    \begin{table}[H]
+        \centering
+        \caption{Performance from different solution methods for maximum budget, $b = 30$.}
+        \begin{tabular}{|C{2.8cm}|C{2.5cm}|C{2.5cm}|C{2.5cm}|}
+            \hline
+            & MCKP with Cover Inequalities (DP) & MCKP with Cover Inequalities (Gurobi) & MCKP (Gurobi)\\
+            \hline
+            Formulation & Linear Program (LP) & Linear Program (LP) & Integer Program (IP) \\
+            \hline
+            Time (seconds) & 2.8814997673 & 22.9754681587 & 0.020500421524 \\
+            \hline
+            Objective Value & 0.176072650791 & 0.176072650791 & 0.180687443257\\
+            \hline
+            Total Weight & 27.4 & 27.4 & 29.8 \\
+            \hline
+            Inequalities found & 11 & 8 & --\\
+            \hline
+        \end{tabular}
+        \label{t1}
+    \end{table}
+
+    MCKP with cover inequalities was implemented twice. In one of the implementations the separation problema and the
+    lifting proccedure was done using the Dynamic Programming (DP) knapsack algorithm. In the other implementation the
+    cover and lifting proccedure was done by solving IP's described in the previous sections directly by Gurobi. Gurobi
+    took a really long time to solve the separation problem and lifting when IP's were solved. The found solutions using
+    the two different implementations did not change. The number of inequalities however changed. The code for both
+    implementation will be attached with this report.
+
+    According to \cref{t1}, the time taken to find the knapsack cover inequalities, strengthening them using DP and then
+    solving the LP again after adding the inequalities took a lot more time than directly solving the IP with Gurobi.
+    The lifting proccedure being time consuming made the MCKP with cover Inequalities much slower than MCKP with Gurobi.
+    When the cover and lifting proccedure was done using Gurobi only the run time increased even more. 
+    
+    Solving the MCKP LP with cover inequalities (both implementations) resulted in a lower objective value than solving
+    the MCKP with Gurobi's IP solver. The sum of weight of the armor pieces was also closer to the maximum weight budget
+    for MCKP with Gurobi than MCKP with cover inequalities. Because the described lifting proccedure can strengthen
+    cover inequalities in different orderings and all possible orderings were not considered because of very large
+    number of orderings, more stronger inequalities that exist were not added to the MCKP LP. Because of that MCKP LP
+    at the last iteration found $x^*$ which was not the optimal solution and a better $x^*$ would be found if more
+    stronger cover inequalities were added.
+
+    A minimum number of iteration is used until which even if $\zeta \geq 1$ from the separation problem the program
+    would not terminate. Instead $x^*$ at that point would be slightly modified randomly and another attempt at finding a
+    cover will be made. This is done so that more covers can be found with different $x^*$ by solving the separation
+    problem more times. 
+    
+    The cover inequalities \cref{dpci1}--\cref{dpci2} were added to the LP relaxation of the MCKP when DP was used to solve the
+    separation problem.
+    \begin{gather}
+        3x_{338} + 4x_{319} + x_{304} + 5x_{232} + 2x_{224} + x_{38} + x_{30} + x_{28} + x_{26} \notag \\ + x_{23} + x_{20} \leq 7 \label{dpci1} \\
+        3x_{338} + 4x_{319} + x_{304} + 5x_{232} + 2x_{224} + x_{38} + x_{30} + x_{28} + x_{26} \notag \\ + x_{23} + x_{20} + x_{15} \leq 7 \\
+        3x_{338} + 4x_{319} + x_{304} + 5x_{232} + 2x_{224} + x_{38} + x_{30} + x_{28} + x_{26} \notag \\ + x_{23} + x_{20} + x_{15} + x_{12} \leq 7 \\
+        3x_{338} + 4x_{319} + x_{304} + 5x_{232} + 2x_{224} \leq 7 \\
+        3x_{338} + 4x_{319} + x_{304} \leq 7 \\
+        3x_{338} \leq 7 \\
+        3x_{338} + 4x_{319} + x_{304} + 5x_{232} \leq 7 \\
+        3x_{338} + 4x_{319} \leq 7 \\
+        3x_{338} + 4x_{319} + x_{304} + 5x_{232} + 2x_{224} + x_{38} \leq 7 \\
+        3x_{338} + 4x_{319} + x_{304} + 5x_{232} + 2x_{224} + x_{38} + x_{30} \leq 7 \\
+        3x_{338} + 4x_{319} + x_{304} + 5x_{232} + 2x_{224} + x_{38} + x_{30} + x_{28} \leq 7 \\
+        3x_{338} + 4x_{319} + x_{304} + 5x_{232} + 2x_{224} + x_{38} + x_{30} + x_{28} + x_{26} \leq 7 \\
+        3x_{338} + 4x_{319} + x_{304} + 5x_{232} + 2x_{224} + x_{38} + x_{30} + x_{28} + x_{26} + x_{23} \leq 7 \label{dpci2}
+    \end{gather}
+
+    The cover inequalities \cref{gci1}--\cref{gci2} were found when Gurobi was used to solve the separation problem:
+    \begin{gather}
+        x_{544} + x_{519} + x_{500} + x_{414} + x_{342} \leq 3 \label{gci1} \\
+        x_{544} + x_{519} + x_{500} \leq 3 \\
+        x_{544} \leq 3 \\
+        x_{544} + x_{519} + x_{500} + x_{414} \leq 3 \\
+        x_{544} + x_{519} \leq 3 \\
+        x_{544} + x_{519} + x_{500} + x_{414} + x_{342} + x_{319} \leq 3 \\
+        x_{544} + x_{519} + x_{500} + x_{414} + x_{342} + x_{319} + x_{232} \leq 3 \\
+        x_{544} + x_{519} + x_{500} + x_{414} + x_{342} + x_{319} + x_{232} + x_{55} \leq 3 \label{gci2}
+    \end{gather}
+
+    The selected armor pieces for maximum budget, $b = 30$ is given in \cref{t2}. The MCKP with Cover inequalities using
+    DP and Gurobi both resulted in the same solution.
+    \begin{table}[H]
+        \centering
+        \caption{Solution for maximum budget, $b = 30$.}
+        \begin{tabular}{|C{1cm}|C{4.8cm}|C{5cm}|}
+            \hline
+            Class & MCKP with Cover Inequalities & MCKP with Gurobi IP\\
+            \hline
+            Head & Greathood (weight=5.1) & Greathood (weight=5.1) \\
+            \hline
+            Arms & Mushroom Arms (weight=1.7) & Mushroom Arms (weight=1.7) \\
+            \hline
+            Chest & Radahn's Lion Armor (weight=17.5) & Radahn's Lion Armor (weight=17.5) \\
+            \hline
+            Legs & Mushroom Legs (weight=3.1) & Guardian Greaves (weight=5.5) \\
+            \hline
+        \end{tabular}
+        \label{t2}
+    \end{table}
+    
+    The legs armor piece was not optimal with MCKP with Cover Inequalities because a heavier legs piece could have been
+    found like what Gurobi IP found.
+
+    \section{Conclusions}
+    In this report the problem of selecting the best armor pieces under a maximum weight budget for the Game Elden Ring
+    is considered. First an IP formulation of the problem was given. The LP relaxation of the problem was solved
+    repeatedly until separation problem could not identify any violated cover Inequalities. The separation problem was
+    also discussed. The cover generated by the separation problem were then strengthened using a lifting proccedure
+    which was described as well. After that the entire solution algorithm and the numerical results from the algorithm
+    were discussed. Limitations of the solution algorithm were mentioned in the numerical results section. For a
+    specified maximum budget the solutions from both methods, MCKP with covers and Gurobi's IP solver, selected the same
+    pieces except the leg piece.
+    
+    Since the problem is not the standard 0-1 Knapsack problem the lifted cover inequalities may not produce the convex hull. So integral solution may not be achieved which is a limitation of the procedure described in this report.
+
+    \bibliographystyle{abbrvnat}
+    \bibliography{citations}
+
+    \vspace*{-10pt}
+
+    \section*{Instructions to run code}
+    Libraries used:
+    \begin{enumerate}
+        \item Python (version=``3.9.4'')
+        \item Numpy (version=``1.19.5'')
+        \item Gurobi (version=``9.1.1'')
+    \end{enumerate}
+
+    The ``mckp.py" file can be run directly with Python to see the results.
+
+    \vspace*{-10pt}
+    \section*{Data}
+    All the data are available in ``data.csv" and \href{https://github.com/oureuphoriant/Elden_Ring_Armor_Calc}{github}.
+
+\end{document}
