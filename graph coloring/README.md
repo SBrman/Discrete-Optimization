@@ -1,6 +1,7 @@
 Given, a planar graph $G = (V, E)$ and a set of four colors, $C = \left\lbrace 1, 2, 3, 4 \right\rbrace$
 
 Variables:
+$$
 \begin{align}
     x_{ic} & = \begin{cases}
         1, & \text{if node $i$ is colored with color $c$} \\
@@ -11,8 +12,10 @@ Variables:
         0, &\text{ otherwise}
     \end{cases}
 \end{align}
+$$
 
 Constraints:
+$$
 \begin{enumerate}
     \item One color for each node. 
     \begin{align}
@@ -33,8 +36,11 @@ Constraints:
         z_c \in \left\lbrace 0, 1 \right\rbrace 
     \end{align}
 \end{enumerate}
+$$
 
 Objective:
+$$
 \begin{align}
     \min\limits_{c \in C} z_c
 \end{align}
+$$
